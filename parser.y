@@ -1,22 +1,22 @@
 %{
 #include <stdio.h>
-#include <stdlib.h>
 #include "cJSON.h"
 #include "string.h"
-#define YYDEBUG 1
+// #define YYDEBUG 1
+
 extern int yylex();
-extern FILE *yyin;
 
 struct jso_kv {
         char *key;
         cJSON *val;
 };
 
-void yyerror(struct cJSON** jso, int *result, const char*);
+extern void yyerror(struct cJSON** jso, const char*);
+extern int hocon_parse(int argc, char **argv);
 
 %}
 
-%parse-param {struct cJSON **jso} {int *result}
+%parse-param {struct cJSON **jso}
 
 
 %union {
@@ -50,8 +50,7 @@ void yyerror(struct cJSON** jso, int *result, const char*);
 
 %%
 
-json:
-        | value {*result = 1024; *jso =  $1;}
+json:  value {*jso =  $1;}
         ;
 
 value: object      { $$ = $1; /*printf("[OB]: %s\n", cJSON_PrintUnformatted($1));*/ }
@@ -97,25 +96,8 @@ values: value                    { $$ = cJSON_CreateArray(); cJSON_AddItemToArra
 %%
 
 
-int main(int argc, char **argv) {
-        // yydebug = 1;
 
-        if (argc > 1) {
-                if (!(yyin = fopen(argv[1], "r"))) {
-                        perror((argv[1]));
-                        return 1;
-                }
-
-        }
-
-        int result = 0;
-        cJSON *jso = cJSON_CreateObject();
-        int rv = yyparse(&jso, &result);
-        printf("json : %s\n", cJSON_PrintUnformatted(jso));
-
-}
-
-void yyerror(struct cJSON **jso, int *result, const char *s)
+void yyerror(struct cJSON **jso, const char *s)
 {
     fprintf(stderr, "error: %s\n", s);
 }
