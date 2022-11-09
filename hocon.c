@@ -1,4 +1,5 @@
 #include "hocon.h"
+#include "cvector.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -73,6 +74,75 @@ path_expression_parse(cJSON *jso)
 	return jso;
 }
 
+// if same level has same name, if they are not object
+// the back covers the front
+// TODO FIXME memory leak
+cJSON *
+deduplication_and_merging(cJSON *jso)
+{
+	cJSON  *parent = jso;
+	cJSON  *child  = jso->child;
+	cJSON **table  = NULL;
+
+	while (child) {
+		for (size_t i = 0; i < cvector_size(table); i++) {
+			if (table[i] && child && table[i]->string &&
+			    child->string &&
+			    0 == strcmp(table[i]->string, child->string)) {
+				if (table[i]->type == child->type &&
+				    cJSON_Object == table[i]->type) {
+					// merging object
+					cJSON *next = table[i]->child;
+					while (next) {
+						cJSON *dup = cJSON_Duplicate(
+						    next, cJSON_True);
+						cJSON_AddItemToObject(child,
+						    dup->string,
+						    dup); // cJSON_Duplicate(next,
+						          // cJSON_True));
+						// cJSON_AddItemToObject(child,
+						// next->string, next);
+						// //cJSON_Duplicate(next,
+						// cJSON_True)); cJSON *free =
+						// next;
+						next = next->next;
+						// cJSON_DetachItemFromObject(table[i],
+						// free->string);
+					}
+
+					cJSON_DeleteItemFromObject(
+					    parent, table[i]->string);
+					cvector_erase(table, i);
+
+				} else {
+					if (0 == i) {
+						parent->child = child;
+						cJSON_free(table[i]);
+						cvector_erase(table, i);
+
+					} else {
+						cJSON *free =
+						    table[i - 1]->next;
+						table[i - 1]->next =
+						    table[i - 1]->next->next;
+						cvector_erase(table, i);
+						cJSON_free(free);
+					}
+				}
+			}
+		}
+
+		cvector_push_back(table, child);
+
+		if (child->child) {
+			deduplication_and_merging(child);
+		}
+		child = child->next;
+	}
+	cvector_free(table);
+	return jso;
+}
+
 
 cJSON *hocon_parse(char *file)
 {
@@ -85,6 +155,10 @@ cJSON *hocon_parse(char *file)
 
    cJSON *jso = cJSON_CreateObject();
    int rv = yyparse(&jso);
-   // printf("json : %s\n", cJSON_PrintUnformatted(jso));
-   return jso;
+   if (cJSON_False != cJSON_IsInvalid(jso))
+   {
+        jso = path_expression_parse(jso);
+        return deduplication_and_merging(jso);
+   }
+   return NULL;
 }
