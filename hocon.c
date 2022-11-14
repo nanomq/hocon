@@ -1,5 +1,6 @@
-#include "hocon.h"
 #include "cvector.h"
+#include "hocon.h"
+#include "parser.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -143,8 +144,7 @@ deduplication_and_merging(cJSON *jso)
 	return jso;
 }
 
-
-cJSON *hocon_parse(char *file)
+cJSON *hocon_parse(const char *file)
 {
     // yydebug = 1;
     if (!(yyin = fopen(file, "r"))) {
@@ -153,8 +153,12 @@ cJSON *hocon_parse(char *file)
     }
 
 
-   cJSON *jso = cJSON_CreateObject();
+   cJSON *jso = NULL;
    int rv = yyparse(&jso);
+   if (0 != rv) {
+		fprintf(stderr, "invalid data to parse!");
+		exit(1);
+   }
    if (cJSON_False != cJSON_IsInvalid(jso))
    {
         jso = path_expression_parse(jso);
