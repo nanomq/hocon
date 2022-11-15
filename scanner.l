@@ -3,7 +3,7 @@
 #include "parser.h"
 
 %}
-/*%option debug*/ 
+/* %option debug */
 %option noyywrap
 
 
@@ -13,9 +13,21 @@ Ignored                 {WhiteSpace}|{Comment}
 
 EXP                     ([Ee][-+]?[0-9]+)
 Letter                  [A-Za-z]
-Unquoted                {Letter}[A-Za-z0-9_\.@%\-\|\\"]*
+Unquoted                {Letter}[A-Za-z0-9_\.@%\-\ |\\"]*
 Quoted                  \"([^\"]|\\\")*\"
+
+Hex                     [0-9A-Fa-f]
+Escape                  ["\\bfnrt]
+UnicodeEscape           u{Hex}{Hex}{Hex}{Hex}
+Char                    ([^\"]|\\{Escape}|\\{UnicodeEscape})
+String                  "{Char}*"
+MultilineChar           ([^"]|"[^"]|""[^"]|\\{Escape}|\\{UnicodeEscape})
+MultilineString         """{MultilineChar}*"""
+
 Punctuator              [{}\[\],:=]
+
+Variable                \$\{{Unquoted}\}
+MaybeVar                \$\{\?{Unquoted}\}
 
 Digit                   [0-9]
 Sign                    [+\-]
@@ -54,6 +66,9 @@ Comma                   ","
 {Unquoted}              { yylval.strval = strdup(yytext); return USTRING; } 
 {Integer}               { yylval.intval  = atoi(yytext); return INTEGER; } 
 {Decimal}               { yylval.floatval = atof(yytext); return DECIMAL ; } 
+{MultilineString}       { /*TODO*/ printf("Multi line string: %s\n", yytext);}
+{Variable}              { /*TODO*/ printf("Variable string: %s\n", yytext);}
+{MaybeVar}              { /*TODO*/ printf("MaybeVar line string: %s\n", yytext);}
 .                       { printf("Unrecognized %c\n", yytext[0]); }
 
 %%

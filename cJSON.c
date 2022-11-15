@@ -56,7 +56,7 @@
 #pragma GCC visibility pop
 #endif
 
-#include "nng/supplemental/nanolib/cJSON.h"
+#include "cJSON.h"
 
 /* define our own boolean type */
 #ifdef true
