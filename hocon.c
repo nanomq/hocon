@@ -10,13 +10,14 @@ extern FILE *yyin;
 static cJSON *
 path_expression_parse_core(cJSON *parent, cJSON *jso)
 {
-	jso       = cJSON_DetachItemFromObject(parent, jso->string);
+	jso = cJSON_DetachItemFromObject(parent, jso->string);
 	char *str = strdup(jso->string);
-	char *p   = str;
+	char *p = str;
 	char *p_a = str + strlen(str);
 
-	char t[128] = { 0 };
-	while (NULL != (p = strrchr(str, '.'))) {
+	char t[128] = {0};
+	while (NULL != (p = strrchr(str, '.')))
+	{
 		cJSON *jso_new = cJSON_CreateObject();
 		// cJSON *jso_new = NULL;
 
@@ -26,13 +27,13 @@ path_expression_parse_core(cJSON *parent, cJSON *jso)
 		strncpy(t, p + 1, p_a - p);
 		// cJSON_AddItemToObject(jso_new, t, jso);
 		cJSON_AddItemToObject(
-		    jso_new, t, jso); // cJSON_Duplicate(jso, cJSON_True));
+			jso_new, t, jso); // cJSON_Duplicate(jso, cJSON_True));
 		memset(t, 0, 128);
 		// jso_new = json(c, jso)
 		// cJSON_Delete(jso);
-		jso     = jso_new;
+		jso = jso_new;
 		jso_new = NULL;
-		p_a     = --p;
+		p_a = --p;
 	}
 
 	strncpy(t, str, p_a - str + 1);
@@ -57,17 +58,22 @@ static cJSON *
 path_expression_parse(cJSON *jso)
 {
 	cJSON *parent = jso;
-	cJSON *child  = jso->child;
+	cJSON *child = jso->child;
 
-	while (child) {
-		if (child->child) {
+	while (child)
+	{
+		if (child->child)
+		{
 			path_expression_parse(child);
 		}
 		if (NULL != child->string &&
-		    NULL != strchr(child->string, '.')) {
+			NULL != strchr(child->string, '.'))
+		{
 			path_expression_parse_core(parent, child);
 			child = parent->child;
-		} else {
+		}
+		else
+		{
 			child = child->next;
 		}
 	}
@@ -81,26 +87,31 @@ path_expression_parse(cJSON *jso)
 cJSON *
 deduplication_and_merging(cJSON *jso)
 {
-	cJSON  *parent = jso;
-	cJSON  *child  = jso->child;
-	cJSON **table  = NULL;
+	cJSON *parent = jso;
+	cJSON *child = jso->child;
+	cJSON **table = NULL;
 
-	while (child) {
-		for (size_t i = 0; i < cvector_size(table); i++) {
+	while (child)
+	{
+		for (size_t i = 0; i < cvector_size(table); i++)
+		{
 			if (table[i] && child && table[i]->string &&
-			    child->string &&
-			    0 == strcmp(table[i]->string, child->string)) {
+				child->string &&
+				0 == strcmp(table[i]->string, child->string))
+			{
 				if (table[i]->type == child->type &&
-				    cJSON_Object == table[i]->type) {
+					cJSON_Object == table[i]->type)
+				{
 					// merging object
 					cJSON *next = table[i]->child;
-					while (next) {
+					while (next)
+					{
 						cJSON *dup = cJSON_Duplicate(
-						    next, cJSON_True);
+							next, cJSON_True);
 						cJSON_AddItemToObject(child,
-						    dup->string,
-						    dup); // cJSON_Duplicate(next,
-						          // cJSON_True));
+											  dup->string,
+											  dup); // cJSON_Duplicate(next,
+													// cJSON_True));
 						// cJSON_AddItemToObject(child,
 						// next->string, next);
 						// //cJSON_Duplicate(next,
@@ -112,20 +123,23 @@ deduplication_and_merging(cJSON *jso)
 					}
 
 					cJSON_DeleteItemFromObject(
-					    parent, table[i]->string);
+						parent, table[i]->string);
 					cvector_erase(table, i);
-
-				} else {
-					if (0 == i) {
+				}
+				else
+				{
+					if (0 == i)
+					{
 						parent->child = child;
 						cJSON_free(table[i]);
 						cvector_erase(table, i);
-
-					} else {
+					}
+					else
+					{
 						cJSON *free =
-						    table[i - 1]->next;
+							table[i - 1]->next;
 						table[i - 1]->next =
-						    table[i - 1]->next->next;
+							table[i - 1]->next->next;
 						cvector_erase(table, i);
 						cJSON_free(free);
 					}
@@ -135,7 +149,8 @@ deduplication_and_merging(cJSON *jso)
 
 		cvector_push_back(table, child);
 
-		if (child->child) {
+		if (child->child)
+		{
 			deduplication_and_merging(child);
 		}
 		child = child->next;
@@ -144,25 +159,50 @@ deduplication_and_merging(cJSON *jso)
 	return jso;
 }
 
-cJSON *hocon_parse(const char *file)
+cJSON *hocon_parse_file(const char *file)
 {
-    // yydebug = 1;
-    if (!(yyin = fopen(file, "r"))) {
-            perror((file));
-            return NULL;
-    }
+	// yydebug = 1;
+	if (!(yyin = fopen(file, "r")))
+	{
+		perror((file));
+		return NULL;
+	}
 
-
-   cJSON *jso = NULL;
-   int rv = yyparse(&jso);
-   if (0 != rv) {
+	cJSON *jso = NULL;
+	int rv = yyparse(&jso);
+	if (0 != rv)
+	{
 		fprintf(stderr, "invalid data to parse!");
 		exit(1);
-   }
-   if (cJSON_False != cJSON_IsInvalid(jso))
-   {
-        jso = path_expression_parse(jso);
-        return deduplication_and_merging(jso);
-   }
-   return NULL;
+	}
+	if (cJSON_False != cJSON_IsInvalid(jso))
+	{
+		jso = path_expression_parse(jso);
+		return deduplication_and_merging(jso);
+	}
+	return NULL;
+}
+
+typedef struct yy_buffer_state *YY_BUFFER_STATE;
+extern YY_BUFFER_STATE yy_scan_bytes(char *buffer, size_t size);
+extern void yy_delete_buffer(struct yy_buffer_state *buffer);
+
+cJSON *hocon_parse_str(char *str, size_t len)
+{
+	YY_BUFFER_STATE buffer = yy_scan_bytes(str, len);
+
+	cJSON *jso = NULL;
+	int rv = yyparse(&jso);
+	if (0 != rv)
+	{
+		fprintf(stderr, "invalid data to parse!");
+		exit(1);
+	}
+	yy_delete_buffer(buffer);
+	if (cJSON_False != cJSON_IsInvalid(jso))
+	{
+		jso = path_expression_parse(jso);
+		return deduplication_and_merging(jso);
+	}
+	return NULL;
 }
