@@ -13,6 +13,7 @@ struct jso_kv {
 
 extern void jso_kv_free(struct jso_kv* kv);
 extern struct jso_kv* jso_kv_new(char *key, struct cJSON *val);
+extern char * remove_white_space(char *str);
 extern void yyerror(struct cJSON** jso, const char*);
 extern int hocon_parse(int argc, char **argv);
 
@@ -91,9 +92,9 @@ member: STRING PUNCT value              {
                                                 int len = strlen(str); free($1);
                                                 str[len-1] = '\0'; $$ = jso_kv_new(str, $3);
                                         }
-        | USTRING PUNCT value           { $$ = jso_kv_new($1, $3);}
-        | USTRING LCURLY value RCURLY   { $$ = jso_kv_new($1, $3);}
-        | USTRING LBRAC values RBRAC    { $$ = jso_kv_new($1, $3);}
+        | USTRING PUNCT value           { $$ = jso_kv_new(remove_white_space($1), $3);}
+        | USTRING LCURLY value RCURLY   { $$ = jso_kv_new(remove_white_space($1), $3);}
+        | USTRING LBRAC values RBRAC    { $$ = jso_kv_new(remove_white_space($1), $3);}
         ;
 
 array: LBRAC RBRAC               { printf("[]\n");}
@@ -126,6 +127,23 @@ struct jso_kv* jso_kv_new(char *key, struct cJSON *val)
         kv->val = val;
         return kv;
 }
+
+char *remove_white_space(char *str)
+{
+        while (' ' == *str || '\t' == *str) {
+                str++;
+        }
+
+        char *ret = str;
+        str = str + strlen(str);
+        
+        while (' ' == *str || '\t' == *str || '\0' == *str) {
+                str--;
+        }
+        *(str+1) = '\0';
+        return ret;
+}
+
 
 
 void yyerror(struct cJSON **jso, const char *s)
