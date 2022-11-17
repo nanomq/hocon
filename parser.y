@@ -5,7 +5,6 @@
 // #define YYDEBUG 1
 
 extern int yylex();
-
 struct jso_kv {
         char *key;
         cJSON *val;
@@ -88,7 +87,8 @@ members: member                 {
         ;
 
 member: STRING PUNCT value              { 
-                                                char *str = strdup($1); str++; int len = strlen(str); 
+                                                char *str = strdup($1 + 1); 
+                                                int len = strlen(str); free($1);
                                                 str[len-1] = '\0'; $$ = jso_kv_new(str, $3);
                                         }
         | USTRING PUNCT value           { $$ = jso_kv_new($1, $3);}
