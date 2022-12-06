@@ -63,6 +63,7 @@ value: object      { $$ = $1;}
                         char *str = remove_escape($1);
                         free($1);
                         $$ = cJSON_CreateString(str); 
+                        free(str);
                    }
         | USTRING  { $$ = cJSON_CreateString($1); free($1);}
         | DECIMAL  { $$ = cJSON_CreateNumber($1); }
