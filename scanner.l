@@ -1,8 +1,8 @@
 %{
 #include <string.h>
 #include "parser.h"
-
 %}
+
 /* %option debug */
 %option noyywrap
 
@@ -65,7 +65,7 @@ Comma                   ","
 {Quoted}                { yylval.strval = strdup(yytext); return STRING; } 
 {Unquoted}              { yylval.strval = strdup(yytext); return USTRING; } 
 {Integer}               { yylval.intval  = atoi(yytext); return INTEGER; } 
-{Decimal}               { yylval.floatval = atof(yytext); return DECIMAL ; } 
+{Decimal}               { yylval.floatval = atof(yytext); return DECIMAL; } 
 {MultilineString}       { /*TODO*/ printf("Multi line string: %s\n", yytext);}
 {Variable}              { /*TODO*/ printf("Variable string: %s\n", yytext);}
 {MaybeVar}              { /*TODO*/ printf("MaybeVar line string: %s\n", yytext);}

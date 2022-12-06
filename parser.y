@@ -1,7 +1,9 @@
 %{
 #include <stdio.h>
 #include "cJSON.h"
+#include "cvector.h"
 #include <string.h>
+#include <stdlib.h>
 // #define YYDEBUG 1
 
 extern int yylex();
@@ -11,9 +13,10 @@ struct jso_kv {
 };
 
 
-extern void jso_kv_free(struct jso_kv* kv);
-extern struct jso_kv* jso_kv_new(char *key, struct cJSON *val);
-extern char * remove_white_space(char *str);
+extern void jso_kv_free(struct jso_kv *kv);
+extern struct jso_kv *jso_kv_new(char *key, struct cJSON *val);
+extern char *remove_white_space(char *str);
+extern char *remove_escape(char *str);
 extern void yyerror(struct cJSON** jso, const char*);
 extern int hocon_parse(int argc, char **argv);
 
@@ -57,10 +60,9 @@ json:  value {*jso =  $1;}
 value: object      { $$ = $1;}
         | array    { $$ = $1;}
         | STRING   { 
-                        char *str = strdup($1); free($1); 
-                        char *p = str; str++; int len = strlen(str); 
-                        str[len-1] = '\0'; $$ = cJSON_CreateString(str); 
-                        free(p);
+                        char *str = remove_escape($1);
+                        free($1);
+                        $$ = cJSON_CreateString(str); 
                    }
         | USTRING  { $$ = cJSON_CreateString($1); free($1);}
         | DECIMAL  { $$ = cJSON_CreateNumber($1); }
@@ -88,9 +90,10 @@ members: member                 {
         ;
 
 member: STRING PUNCT value              { 
-                                                char *str = strdup($1 + 1); 
-                                                int len = strlen(str); free($1);
-                                                str[len-1] = '\0'; $$ = jso_kv_new(str, $3);
+
+                                                char *str = remove_escape($1);
+                                                free($1);
+                                                $$ = jso_kv_new(str, $3);
                                         }
         | USTRING PUNCT value           { $$ = jso_kv_new(remove_white_space($1), $3);}
         | USTRING LCURLY value RCURLY   { $$ = jso_kv_new(remove_white_space($1), $3);}
@@ -142,6 +145,23 @@ char *remove_white_space(char *str)
         }
         *(str+1) = '\0';
         return ret;
+}
+
+char *remove_escape(char *str)
+{
+        str++;
+        char *ret = NULL;
+        while ('\0' != *str) {
+                if ('\\' != *str) {
+                        cvector_push_back(ret, *str);
+                }
+                str++;
+        }
+        cvector_pop_back(ret);
+        cvector_push_back(ret, '\0');
+        char *res = strdup(ret);
+        cvector_free(ret);
+        return res;
 }
 
 
