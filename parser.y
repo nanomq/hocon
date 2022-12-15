@@ -52,6 +52,10 @@ extern int hocon_parse(int argc, char **argv);
 %type <jsonval> array
 %type <jsonval> json
 
+%destructor { jso_kv_free($$); }  member
+%destructor { cJSON_Delete($$); } members value
+%destructor { free($$); }  STRING USTRING
+
 %%
 
 json:  value {*jso =  $1;}
@@ -76,14 +80,15 @@ value: object      { $$ = $1;}
         | PERCENT  { $$ = cJSON_CreateString($1); free($1);}
         ;
 
-object: LCURLY RCURLY           { printf("[]\n");}
+object: LCURLY RCURLY           { $$ = NULL; printf("{}\n");}
         | LCURLY members RCURLY { $$ = $2; }
         | members               { $$ = $1; }
         ;
 
 members: member                 { 
                                         $$ = cJSON_CreateObject();  
-                                        cJSON_AddItemToObject($$, $1->key, $1->val); 
+                                        if (NULL != $1->val)
+                                                cJSON_AddItemToObject($$, $1->key, $1->val); 
                                         jso_kv_free($1);
                                 }
         | members COMMA member  { cJSON_AddItemToObject($$, $3->key, $3->val); jso_kv_free($3);}
