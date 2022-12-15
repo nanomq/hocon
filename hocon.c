@@ -58,7 +58,9 @@ static cJSON *
 path_expression_parse(cJSON *jso)
 {
 	cJSON *parent = jso;
-	cJSON *child = jso->child;
+	cJSON *child = NULL;
+	if (NULL != jso)
+		child = jso->child;
 
 	while (child)
 	{
@@ -88,7 +90,9 @@ cJSON *
 deduplication_and_merging(cJSON *jso)
 {
 	cJSON *parent = jso;
-	cJSON *child = jso->child;
+	cJSON *child = NULL;
+	if (NULL != jso)
+		child = jso->child;
 	cJSON **table = NULL;
 
 	while (child)
@@ -172,8 +176,8 @@ cJSON *hocon_parse_file(const char *file)
 	int rv = yyparse(&jso);
 	if (0 != rv)
 	{
-		fprintf(stderr, "invalid data to parse!");
-		exit(1);
+		fprintf(stderr, "invalid data to parse!\n");
+		return NULL;
 	}
 	if (cJSON_False != cJSON_IsInvalid(jso))
 	{
@@ -195,8 +199,8 @@ cJSON *hocon_parse_str(char *str, size_t len)
 	int rv = yyparse(&jso);
 	if (0 != rv)
 	{
-		fprintf(stderr, "invalid data to parse!");
-		exit(1);
+		fprintf(stderr, "invalid data to parse!\n");
+		return NULL;
 	}
 	yy_delete_buffer(buffer);
 	if (cJSON_False != cJSON_IsInvalid(jso))
