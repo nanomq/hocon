@@ -53,12 +53,13 @@ extern int hocon_parse(int argc, char **argv);
 %type <jsonval> json
 
 %destructor { jso_kv_free($$); }  member
-%destructor { cJSON_Delete($$); } members value
-%destructor { free($$); }  STRING USTRING
+%destructor { cJSON_Delete($$); } members value values DURATION BYTESIZE
+%destructor { free($$); }  STRING USTRING 
 
 %%
 
 json:  value {*jso =  $1;}
+        | error
         ;
 
 value: object      { $$ = $1;}
@@ -106,7 +107,7 @@ member: STRING PUNCT value              {
         | USTRING LBRAC values RBRAC    { $$ = jso_kv_new(remove_white_space($1), $3);}
         ;
 
-array: LBRAC RBRAC               { printf("[]\n");}
+array: LBRAC RBRAC               { $$ = NULL; printf("[]\n");}
         | LBRAC values RBRAC     { $$ = $2;}
         ;
 
