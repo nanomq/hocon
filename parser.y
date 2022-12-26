@@ -53,8 +53,8 @@ extern int hocon_parse(int argc, char **argv);
 %type <jsonval> json
 
 %destructor { jso_kv_free($$); }  member
-%destructor { cJSON_Delete($$); } members value values DURATION BYTESIZE
-%destructor { free($$); }  STRING USTRING 
+%destructor { cJSON_Delete($$); } members value values
+%destructor { free($$); } STRING USTRING BYTESIZE DURATION PERCENT
 
 %%
 
