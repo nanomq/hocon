@@ -26,7 +26,7 @@ extern int hocon_parse(int argc, char **argv);
 
 
 %union {
-    int intval;
+    double intval;
     double floatval;
     char *strval;
     struct cJSON *jsonval;

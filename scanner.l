@@ -64,7 +64,7 @@ Comma                   ","
 {Duration}              { yylval.strval = strdup(yytext); return DURATION; }
 {Quoted}                { yylval.strval = strdup(yytext); return STRING; } 
 {Unquoted}              { yylval.strval = strdup(yytext); return USTRING; } 
-{Integer}               { yylval.intval  = atoi(yytext); return INTEGER; } 
+{Integer}               { yylval.intval  = atoll(yytext); return INTEGER; }
 {Decimal}               { yylval.floatval = atof(yytext); return DECIMAL; } 
 {MultilineString}       { /*TODO*/ printf("Multi line string: %s\n", yytext);}
 {Variable}              { /*TODO*/ printf("Variable string: %s\n", yytext);}
