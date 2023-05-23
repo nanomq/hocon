@@ -1,11 +1,20 @@
 %{
 #include <string.h>
 #include "parser.h"
+
+#define MAX_INCLUDE_DEPTH 10
+YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+int include_stack_ptr = 0;
+
 %}
 
 /* %option debug */
 %option noyywrap
 
+/* the "incl" state is used for picking up the name
+ * of an include file
+ */
+%x incl
 
 Comment                 (("#"|"//")[^\n]*)
 WhiteSpace              ([ \t\r\n]+)
@@ -23,6 +32,7 @@ Char                    ([^\"]|\\{Escape}|\\{UnicodeEscape})
 String                  "{Char}*"
 MultilineChar           ([^"]|"[^"]|""[^"]|\\{Escape}|\\{UnicodeEscape})
 MultilineString         """{MultilineChar}*"""
+Include                 include[ \t]*\"
 
 Punctuator              [{}\[\],:=]
 
@@ -59,6 +69,49 @@ Comma                   ","
 {True}                  { return VTRUE; } 
 {False}                 { return VFALSE; }
 {Null}                  { return VNULL; } 
+
+{Include}               BEGIN(incl);
+<incl>[ \t]*            /* eat the whitespace */
+<incl>[^ \t\n\"]+       {  /* got the include file name */
+                            {
+                                int c;
+                                while ((c = input()) && c != '\n');
+                            }
+
+                            if (include_stack_ptr >= MAX_INCLUDE_DEPTH) {
+                                fprintf(stderr, "Includes nested too deeply");
+                                exit(1);
+                            }
+
+                            include_stack[include_stack_ptr++] =
+                                YY_CURRENT_BUFFER;
+
+                            yyin = fopen(yytext, "r");
+
+                            if (!yyin) {
+                                fprintf(stderr, "Include error occured!");
+                                yyterminate();
+
+                            }
+
+                            yy_switch_to_buffer(
+                                yy_create_buffer(yyin, YY_BUF_SIZE));
+
+                            BEGIN(INITIAL);
+                        }
+<incl>.|\n              {   fprintf(stderr, "Include error occured!"); yyterminate();}
+<<EOF>>                 {
+                             if ( --include_stack_ptr < 0 )
+                             {
+                                 yyterminate();
+                             }
+                             else
+                             {
+                                yy_delete_buffer(YY_CURRENT_BUFFER);
+                                yy_switch_to_buffer(
+                                  include_stack[include_stack_ptr]);
+                             }
+                        }
 {Bytesize}              { yylval.strval = strdup(yytext); return BYTESIZE; }
 {Percent}               { yylval.strval = strdup(yytext); return PERCENT; }
 {Duration}              { yylval.strval = strdup(yytext); return DURATION; }
@@ -72,5 +125,3 @@ Comma                   ","
 .                       { printf("Unrecognized %c\n", yytext[0]); }
 
 %%
-
-
