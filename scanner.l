@@ -32,7 +32,7 @@ Char                    ([^\"]|\\{Escape}|\\{UnicodeEscape})
 String                  "{Char}*"
 MultilineChar           ([^"]|"[^"]|""[^"]|\\{Escape}|\\{UnicodeEscape})
 MultilineString         """{MultilineChar}*"""
-Include                 include[ \t]*\"
+Include                 [ \t]*include[ \t]*\"
 
 Punctuator              [{}\[\],:=]
 
@@ -89,15 +89,14 @@ Comma                   ","
                             yyin = fopen(yytext, "r");
 
                             if (!yyin) {
-                                fprintf(stderr, "Include error occured!");
-                                yyterminate();
-
+                                fprintf(stderr, "%s is not exist!", yytext);
+                                include_stack_ptr--;
+                            } else {
+                                yy_switch_to_buffer(
+                                    yy_create_buffer(yyin, YY_BUF_SIZE));
                             }
-
-                            yy_switch_to_buffer(
-                                yy_create_buffer(yyin, YY_BUF_SIZE));
-
                             BEGIN(INITIAL);
+
                         }
 <incl>.|\n              {   fprintf(stderr, "Include error occured!"); yyterminate();}
 <<EOF>>                 {
