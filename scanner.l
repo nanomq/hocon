@@ -22,7 +22,7 @@ Ignored                 {WhiteSpace}|{Comment}
 
 EXP                     ([Ee][-+]?[0-9]+)
 Letter                  [A-Za-z]
-Unquoted                {Letter}[A-Za-z0-9_\.@%\-\ |\\"]*
+Unquoted                {Letter}[A-Za-z0-9_\.@%\-\|\\"]*
 Quoted                  \"([^\"]|\\\")*\"
 
 Hex                     [0-9A-Fa-f]
