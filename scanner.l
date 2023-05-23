@@ -5,10 +5,9 @@
 #define MAX_INCLUDE_DEPTH 10
 YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
 int include_stack_ptr = 0;
-
 %}
 
-/* %option debug */
+/*%option debug*/
 %option noyywrap
 
 /* the "incl" state is used for picking up the name
@@ -33,6 +32,8 @@ String                  "{Char}*"
 MultilineChar           ([^"]|"[^"]|""[^"]|\\{Escape}|\\{UnicodeEscape})
 MultilineString         """{MultilineChar}*"""
 Include                 [ \t]*include[ \t]*\"
+IncludeFile             [ \t]*include[ \t]*file\([ \t]*\"
+Includes                {Include}|{IncludeFile}
 
 Punctuator              [{}\[\],:=]
 
@@ -70,7 +71,7 @@ Comma                   ","
 {False}                 { return VFALSE; }
 {Null}                  { return VNULL; } 
 
-{Include}               BEGIN(incl);
+{Includes}              BEGIN(incl);
 <incl>[ \t]*            /* eat the whitespace */
 <incl>[^ \t\n\"]+       {  /* got the include file name */
                             {
@@ -100,16 +101,16 @@ Comma                   ","
                         }
 <incl>.|\n              {   fprintf(stderr, "Include error occured!"); yyterminate();}
 <<EOF>>                 {
-                             if ( --include_stack_ptr < 0 )
-                             {
-                                 yyterminate();
-                             }
-                             else
-                             {
-                                yy_delete_buffer(YY_CURRENT_BUFFER);
-                                yy_switch_to_buffer(
-                                  include_stack[include_stack_ptr]);
-                             }
+                            if ( --include_stack_ptr < 0 )
+                            {
+                                yyterminate();
+                            }
+                            else
+                            {
+                               yy_delete_buffer(YY_CURRENT_BUFFER);
+                               yy_switch_to_buffer(
+                                 include_stack[include_stack_ptr]);
+                            }
                         }
 {Bytesize}              { yylval.strval = strdup(yytext); return BYTESIZE; }
 {Percent}               { yylval.strval = strdup(yytext); return PERCENT; }
