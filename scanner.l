@@ -81,7 +81,7 @@ Comma                   ","
 
 {IncludesReq}           { BEGIN(inclr); bcount = count_brace(yytext);}
 <inclr>[ \t]*            /* eat the whitespace */
-<inclr>[^ \t\n\"\)]+       {  /* got the include file name */
+<inclr>[^ \t\n\"\)]+    {  /* got the include file name */
                             {
                                 int c;
                                 while ((c = input()) && c != ')');
@@ -111,9 +111,8 @@ Comma                   ","
                             BEGIN(INITIAL);
 
                         }
-<inclr>.|\n              {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
 
-{Includes}              BEGIN(incl);
+{Includes}              { BEGIN(incl); bcount = count_brace(yytext); }
 <incl>[ \t]*            /* eat the whitespace */
 <incl>[^ \t\n\"]+       {  /* got the include file name */
                             {
@@ -130,6 +129,12 @@ Comma                   ","
                                 YY_CURRENT_BUFFER;
 
                             yyin = fopen(yytext, "r");
+
+                            if (bcount == 1) {
+                                int c = 0;
+                                while ((c = input()) && c != ')');
+                            }
+
 
                             if (!yyin) {
                                 fprintf(stderr, "File %s is not exist!\n", yytext);
