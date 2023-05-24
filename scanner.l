@@ -86,6 +86,7 @@ Comma                   ","
                                 int c;
                                 while ((c = input()) && c != ')');
                             }
+
                             if (include_stack_ptr >= MAX_INCLUDE_DEPTH) {
                                 fprintf(stderr, "Includes nested too deeply!");
                                 exit(1);
@@ -111,13 +112,14 @@ Comma                   ","
                             BEGIN(INITIAL);
 
                         }
+<inclr>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
 
 {Includes}              { BEGIN(incl); bcount = count_brace(yytext); }
 <incl>[ \t]*            /* eat the whitespace */
 <incl>[^ \t\n\"]+       {  /* got the include file name */
                             {
                                 int c;
-                                while ((c = input()) && c != '\n');
+                                while ((c = input()) && c != '"');
                             }
 
                             if (include_stack_ptr >= MAX_INCLUDE_DEPTH) {
@@ -146,7 +148,7 @@ Comma                   ","
                             BEGIN(INITIAL);
 
                         }
-<*>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
+<incl>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
 <<EOF>>                 {
                             if ( --include_stack_ptr < 0 )
                             {
