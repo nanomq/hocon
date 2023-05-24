@@ -100,6 +100,7 @@ deduplication_and_merging(cJSON *jso)
 		for (size_t i = 0; i < cvector_size(table); i++)
 		{
 
+			// If we find duplicate, compare json key
 			if (table[i] && child && table[i]->string &&
 				child->string &&
 				0 == strcmp(table[i]->string, child->string))
@@ -107,7 +108,8 @@ deduplication_and_merging(cJSON *jso)
 				if (table[i]->type == child->type &&
 					cJSON_Object == table[i]->type)
 				{
-					// merging object
+					// merging object, move all child 
+					// of table[i] to current (child) node
 					cJSON *next = table[i]->child;
 					while (next)
 					{
@@ -115,16 +117,8 @@ deduplication_and_merging(cJSON *jso)
 							next, cJSON_True);
 						cJSON_AddItemToObject(child,
 											  dup->string,
-											  dup); // cJSON_Duplicate(next,
-													// cJSON_True));
-						// cJSON_AddItemToObject(child,
-						// next->string, next);
-						// //cJSON_Duplicate(next,
-						// cJSON_True)); cJSON *free =
-						// next;
+											  dup); 
 						next = next->next;
-						// cJSON_DetachItemFromObject(table[i],
-						// free->string);
 					}
 					cJSON_DeleteItemFromObject(
 						parent, table[i]->string);
@@ -139,6 +133,7 @@ deduplication_and_merging(cJSON *jso)
 					{
 						// If first child is duplicate,
 						// free it and move child to child next
+						parent->child->next->prev = parent->child->prev;
 						parent->child = parent->child->next;
 						cJSON_free(table[i]);
 						cvector_erase(table, i);
@@ -146,15 +141,10 @@ deduplication_and_merging(cJSON *jso)
 					}
 					else
 					{
-						// Node i-1 is prev node od node i
-						// move i-1->next to i-1->next->next
-						// and free node i
-						cJSON *free =
-							table[i - 1]->next;
-						table[i - 1]->next =
-							table[i - 1]->next->next;
+						table[i]->next->prev = table[i]->prev;
+						table[i-1]->next = table[i]->next;
+						cJSON_free(table[i]);
 						cvector_erase(table, i);
-						cJSON_free(free);
 					}
 				}
 			}
