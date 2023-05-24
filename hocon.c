@@ -99,6 +99,7 @@ deduplication_and_merging(cJSON *jso)
 	{
 		for (size_t i = 0; i < cvector_size(table); i++)
 		{
+
 			if (table[i] && child && table[i]->string &&
 				child->string &&
 				0 == strcmp(table[i]->string, child->string))
@@ -125,21 +126,29 @@ deduplication_and_merging(cJSON *jso)
 						// cJSON_DetachItemFromObject(table[i],
 						// free->string);
 					}
-
 					cJSON_DeleteItemFromObject(
 						parent, table[i]->string);
 					cvector_erase(table, i);
 				}
 				else
 				{
+					// The rule of No object merge is depending on
+					// the last value, thus we delete node from table
+					// if we find dup node
 					if (0 == i)
 					{
-						parent->child = child;
+						// If first child is duplicate,
+						// free it and move child to child next
+						parent->child = parent->child->next;
 						cJSON_free(table[i]);
 						cvector_erase(table, i);
+
 					}
 					else
 					{
+						// Node i-1 is prev node od node i
+						// move i-1->next to i-1->next->next
+						// and free node i
 						cJSON *free =
 							table[i - 1]->next;
 						table[i - 1]->next =
