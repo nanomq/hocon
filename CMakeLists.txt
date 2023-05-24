@@ -13,7 +13,6 @@ set(PARSER_OUT "${PARSER_DIR}/parser.c")
 
 
 option(ASAN "Build with address sanitizer" OFF)
-option(TEST "Build test program" OFF)
 
 if(ASAN) 
     set(CMAKE_BUILD_TYPE Debug)
@@ -30,8 +29,6 @@ add_library(hocon SHARED "${LEXER_OUT}" "${PARSER_OUT}" "cJSON.c" "hocon.c")
 target_include_directories(hocon PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(hocon PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-if(TEST) 
-    add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test.c hocon)
-    target_include_directories(test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(test PRIVATE hocon)
-endif(TEST)
+ add_executable(hocon_parser ${CMAKE_CURRENT_SOURCE_DIR}/main.c hocon)
+ target_include_directories(hocon_parser PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+ target_link_libraries(hocon_parser PRIVATE hocon)
