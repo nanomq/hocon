@@ -11,9 +11,9 @@ This project is a Hocon data parser for c. We use flex && bison to scan and pars
 - [x] Value merging.
 - [x] Comment.
 - [x] Includes
+- [x] Multiline string.
 - [ ] Reference.
 - [ ] Value joint.
-- [ ] Multiline string.
 - [ ] Whitespace.
 
 ## Building
