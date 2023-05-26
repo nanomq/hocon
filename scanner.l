@@ -15,8 +15,8 @@ int count_brace(char *);
 /* the "incl" state is used for picking up the name
  * of an include file
  */
-%x incl
-%x inclr
+%x INCL
+%x INCLR
 %x LONGSTRING
 
 Comment                 (("#"|"//")[^\n]*)
@@ -79,9 +79,9 @@ Comma                   ","
 {False}                 { return VFALSE; }
 {Null}                  { return VNULL; } 
 
-{IncludesReq}           { BEGIN(inclr); bcount = count_brace(yytext);}
-<inclr>[ \t]*            /* eat the whitespace */
-<inclr>[^ \t\n\"\)]+    {  /* got the include file name */
+{IncludesReq}           { BEGIN(INCLR); bcount = count_brace(yytext);}
+<INCLR>[ \t]*            /* eat the whitespace */
+<INCLR>[^ \t\n\"\)]+    {  /* got the include file name */
                             {
                                 int c;
                                 while ((c = input()) && c != ')');
@@ -112,11 +112,11 @@ Comma                   ","
                             BEGIN(INITIAL);
 
                         }
-<inclr>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
+<INCLR>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
 
-{Includes}              { BEGIN(incl); bcount = count_brace(yytext); }
-<incl>[ \t]*            /* eat the whitespace */
-<incl>[^ \t\n\"]+       {  /* got the include file name */
+{Includes}              { BEGIN(INCL); bcount = count_brace(yytext); }
+<INCL>[ \t]*            /* eat the whitespace */
+<INCL>[^ \t\n\"]+       {  /* got the include file name */
                             {
                                 int c;
                                 while ((c = input()) && c != '"');
@@ -148,7 +148,7 @@ Comma                   ","
                             BEGIN(INITIAL);
 
                         }
-<incl>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
+<INCL>.|\n                 {   fprintf(stderr, "Include error occured!\n"); yyterminate();}
 <<EOF>>                 {
                             if ( --include_stack_ptr < 0 )
                             {
