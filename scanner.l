@@ -17,6 +17,7 @@ int count_brace(char *);
  */
 %x incl
 %x inclr
+%x LONGSTRING
 
 Comment                 (("#"|"//")[^\n]*)
 WhiteSpace              ([ \t\r\n]+)
@@ -32,8 +33,7 @@ Escape                  ["\\bfnrt]
 UnicodeEscape           u{Hex}{Hex}{Hex}{Hex}
 Char                    ([^\"]|\\{Escape}|\\{UnicodeEscape})
 String                  "{Char}*"
-MultilineChar           ([^"]|"[^"]|""[^"]|\\{Escape}|\\{UnicodeEscape})
-MultilineString         """{MultilineChar}*"""
+MultilineString         ["]{3}
 Include                 [ \t]*include[ \t]*\"
 IncludeFile             [ \t]*include[ \t]*file\([ \t]*\"
 Includes                {Include}|{IncludeFile}
@@ -160,7 +160,23 @@ Comma                   ","
                                yy_switch_to_buffer(
                                  include_stack[include_stack_ptr]);
                             }
+                         }
+
+
+{MultilineString}        {   BEGIN(LONGSTRING); }
+<LONGSTRING>{
+  [^\\"]+  yymore();
+  \\(.|\n) yymore();
+  ["]["]?  yymore();
+  ["]{3,}                {
+                            BEGIN(INITIAL);
+                            yylval.strval = malloc(yyleng - 2);
+                            memcpy(yylval.strval, yytext, yyleng - 3);
+                            yylval.strval[yyleng - 3] = 0;
+                            return USTRING;
                         }
+}
+
 {Bytesize}              { yylval.strval = strdup(yytext); return BYTESIZE; }
 {Percent}               { yylval.strval = strdup(yytext); return PERCENT; }
 {Duration}              { yylval.strval = strdup(yytext); return DURATION; }
@@ -168,7 +184,6 @@ Comma                   ","
 {Unquoted}              { yylval.strval = strdup(yytext); return USTRING; } 
 {Integer}               { yylval.intval  = atoll(yytext); return INTEGER; }
 {Decimal}               { yylval.floatval = atof(yytext); return DECIMAL; } 
-{MultilineString}       { /*TODO*/ printf("Multi line string: %s\n", yytext);}
 {Variable}              { /*TODO*/ printf("Variable string: %s\n", yytext);}
 {MaybeVar}              { /*TODO*/ printf("MaybeVar line string: %s\n", yytext);}
 .                       { printf("Unrecognized %c\n", yytext[0]); }
