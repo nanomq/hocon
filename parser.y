@@ -175,5 +175,5 @@ char *remove_escape(char *str)
 
 void yyerror(struct cJSON **jso, const char *s)
 {
-        fprintf(stderr, "error: %s\n", s);
+        fprintf(stderr, "Parser %s\n", s);
 }
