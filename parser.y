@@ -98,9 +98,15 @@ members: member                 {
 
 member: STRING PUNCT value              { 
 
-                                                char *str = remove_escape($1);
-                                                free($1);
-                                                $$ = jso_kv_new(str, $3);
+                                                // if dot in string, 
+                                                char *dotPtr = strchr($1, '.');
+                                                if (dotPtr != NULL) {
+                                                        $$ = jso_kv_new($1, $3);
+                                                } else {
+                                                        char *str = remove_escape($1);
+                                                        free($1);
+                                                        $$ = jso_kv_new(str, $3);
+                                                }
                                         }
         | USTRING PUNCT value           { $$ = jso_kv_new(remove_white_space($1), $3);}
         | USTRING LCURLY value RCURLY   { $$ = jso_kv_new(remove_white_space($1), $3);}
