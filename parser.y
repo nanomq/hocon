@@ -98,7 +98,7 @@ members: member                 {
 
 member: STRING PUNCT value              { 
 
-                                                // if dot in string, 
+                                                // if dot in string
                                                 char *dotPtr = strchr($1, '.');
                                                 if (dotPtr != NULL) {
                                                         $$ = jso_kv_new($1, $3);
