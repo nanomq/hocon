@@ -168,7 +168,9 @@ deduplication_and_merging(cJSON *jso)
 						// free it and move child to child next
 						parent->child->next->prev = parent->child->prev;
 						parent->child = parent->child->next;
-						cJSON_free(table[i]);
+						table[i]->next = NULL;
+						table[i]->prev = NULL;
+						cJSON_Delete(table[i]);
 						cvector_erase(table, i);
 
 					}
@@ -176,7 +178,9 @@ deduplication_and_merging(cJSON *jso)
 					{
 						table[i]->next->prev = table[i]->prev;
 						table[i-1]->next = table[i]->next;
-						cJSON_free(table[i]);
+						table[i]->next = NULL;
+						table[i]->prev = NULL;
+						cJSON_Delete(table[i]);
 						cvector_erase(table, i);
 					}
 				}
